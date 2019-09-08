@@ -1,6 +1,10 @@
 !#/bin/bash
 
 lsblk
+blockDev=''
+rootPW=''
+userName=''
+userPwd=''
 echo -n "Enter path to installation target block device: "
 read blockDev
 echo -n "Choose root password: "
@@ -27,6 +31,7 @@ then
       echo "Done"
    else
       echo "Oh No! Something whent wrong!"
+   fi
    echo "Formating the partitions"
    mkfs.fat -F32 "$blockDev"1
    mkfs.ext4 "$blockDev"2   
