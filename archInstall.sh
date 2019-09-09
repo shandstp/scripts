@@ -1,12 +1,16 @@
 #!/bin/bash
-
 lsblk
-blockDev=''
-rootPW=''
-userName=''
-userPwd=''
+#blockDev=''
+#rootPW=''
+#userName=''
+#userPwd=''
 echo -n "Enter path to installation target block device: "
 read blockDev
+parted $blockDev print
+echo -n "Enter starting megabyte of Linux partition: "
+read firstByte
+echo -n "Enter the new partition number: "
+read partNum
 echo -n "Choose root password: "
 read rootPW
 echo -n "Enter username: "
@@ -26,22 +30,22 @@ then
       echo "Oops, something went wrong"
    fi
    echo "Creating partitions"
-   if parted $blockDev mklabel gpt mkpart primary fat32 1MiB 512MiB set 1 esp on mkpart primary ext4 512MiB 100%
+   if parted $blockDev mkpart primary ext4 $firstByte 100%
    then
       echo "Done"
    else
       echo "Oh No! Something whent wrong!"
    fi
    echo "Formating the partitions"
-   mkfs.fat -F32 "$blockDev"1
-   mkfs.ext4 "$blockDev"2   
-   mount "$blockDev"2 /mnt
+  # mkfs.fat -F32 "$blockDev"1
+   mkfs.ext4 "$blockDev"$partNum   
+   mount "$blockDev"$partNum /mnt
    mkdir /mnt/efi
-   mount "$blockDev"1 /mnt/efi
+   mount "$blockDev"p2 /mnt/efi
 
    echo "Please enable multi-lib"
    read response
-   vim /etc/pacman.d/pacman.conf
+   vim /etc/pacman.conf
    pacstrap /mnt base base-devel os-prober grub efibootmgr intel-ucode nvidia lib32-nvidia-utils xorg xorg-apps gnome gnome-extra
    
    echo "Generating /etc/fstab"
