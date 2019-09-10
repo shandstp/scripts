@@ -1,9 +1,8 @@
 #!/bin/bash
+echo -n "Hostname: "
+read hostname
+: "${hostname:?"Missing hostname"}"
 lsblk
-#blockDev=''
-#rootPW=''
-#userName=''
-#userPwd=''
 echo -n "Enter path to installation target block device: "
 read blockDev
 parted $blockDev print
@@ -12,11 +11,21 @@ read firstByte
 echo -n "Enter the new partition number: "
 read partNum
 echo -n "Choose root password: "
-read rootPW
+read -s rootPW
+echo
+echo -n "Repeat Password: "
+read -s rootPW2
+echo
+[[ "$rootPW" == "$rootPW2" ]] || (echo "Passwords did not match"; exit 1; )
 echo -n "Enter username: "
 read userName
 echo -n "Enter password for "$userName": "
-read userPwd
+read -s userPwd
+echo
+echo -n "Repeat Password: "
+read -s userPwd2
+echo
+[[ "$userPwd" == "$userPwd2" ]] || ( echo "Passwords did not match"; exit 1; )
 
 echo "Verifying boot mode and internet connection"
 if ls /sys/firmware/efi/efivars && ping -c 4 archlinux.org
