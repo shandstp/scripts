@@ -80,7 +80,7 @@ else
 	exit
 fi
 
-if pacstrap /mnt base base-devel os-prober grub efibootmgr intel-ucode nvidia xorg gnome gnome-extra fcitx-mozc fcitx-im fcitx-ui-light fcitx-table-extra fcitx-table-other fcitx-configtool; then
+if pacstrap /mnt base base-devel os-prober grub efibootmgr intel-ucode nvidia xorg gnome gnome-extra fcitx-mozc fcitx-im fcitx-ui-light fcitx-table-extra fcitx-table-other fcitx-configtool pacman-contrib vim adobe-source-han-sans-cn-fonts adobe-source-han-sans-hk-fonts adobe-source-han-sans-jp-fonts adobe-source-han-sans-kr-fonts adobe-source-han-sans-tw-fonts adobe-source-han-serif-cn-fonts adobe-source-han-serif-jp-fonts adobe-source-han-serif-kr-fonts adobe-source-han-serif-tw-fonts noto-fonts ttf-droid ttf-hanazono ttf-sazanami; then
 	echo "Finished install base OS"
 else
 	echo "Something fucked up"
@@ -105,6 +105,7 @@ arch-chroot /mnt timedatectl set-ntp true
 arch-chroot /mnt ln -sf /usr/share/zoneinfo/America/Los_Angelos /etc/localtime
 arch-chroot /mnt sed -i s/"#en_US.UTF-8 UTF-8"/"en_US.UTF-8 UTF-8"/ /etc/locale.gen
 arch-chroot /mnt sed -i s/"#ja_JP.UTF-8 UTF-8"/"ja_JP.UTF-8 UTF-8"/ /etc/locale.gen
+arch-chroot /mnt sed -i s/"# %wheel ALL=(ALL) ALL"/"%wheel ALL=(ALL) ALL"/ /etc/sudoers
 arch-chroot /mnt locale-gen
 
 echo "LANG=en_US.UTF-8" >> /mnt/etc/locale.conf
