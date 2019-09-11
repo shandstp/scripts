@@ -102,7 +102,7 @@ arch-chroot /mnt systemctl enable NetworkManager
 arch-chroot /mnt systemctl enable gdm
 
 arch-chroot /mnt timedatectl set-ntp true
-arch-chroot /mnt ln -sf /usr/share/zoneinfo/America/Los_Angelos /etc/localtime
+arch-chroot /mnt ln -sf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
 arch-chroot /mnt sed -i s/"#en_US.UTF-8 UTF-8"/"en_US.UTF-8 UTF-8"/ /etc/locale.gen
 arch-chroot /mnt sed -i s/"#ja_JP.UTF-8 UTF-8"/"ja_JP.UTF-8 UTF-8"/ /etc/locale.gen
 arch-chroot /mnt sed -i s/"# %wheel ALL=(ALL) ALL"/"%wheel ALL=(ALL) ALL"/ /etc/sudoers
@@ -117,3 +117,4 @@ echo "127.0.1.1	${hostname}.localdomain	${hostname}" >> /mnt/etc/hosts
 echo "GTK_IM_MODULE=fcitx" >> /mnt/home/${username}/.pam_environment
 echo "QT_IM_MODULE=fcitx" >> /mnt/home/${username}/.pam_environment
 echo "XMODIFIERS=@im=fcitx" >> /mnt/home/${username}/.pam_environment
+chown ${username} /mnt/home/${username}/.pam_environment
