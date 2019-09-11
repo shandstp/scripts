@@ -1,95 +1,106 @@
 #!/bin/bash
-echo -n "Hostname: "
-read hostname
-: "${hostname:?"Missing hostname"}"
-lsblk
-echo -n "Enter path to installation target block device: "
-read blockDev
-parted $blockDev print
-echo -n "Enter starting megabyte of Linux partition: "
-read firstByte
-echo -n "Enter the new partition number: "
-read partNum
-echo -n "Choose root password: "
-read -s rootPW
-echo
-echo -n "Repeat Password: "
-read -s rootPW2
-echo
-[[ "$rootPW" == "$rootPW2" ]] || (echo "Passwords did not match"; exit 1; )
-echo -n "Enter username: "
-read userName
-echo -n "Enter password for "$userName": "
-read -s userPwd
-echo
-echo -n "Repeat Password: "
-read -s userPwd2
-echo
-[[ "$userPwd" == "$userPwd2" ]] || ( echo "Passwords did not match"; exit 1; )
 
-echo "Verifying boot mode and internet connection"
-if ls /sys/firmware/efi/efivars && ping -c 4 archlinux.org
-then
-   echo "Looks fine"
-   echo "Setting ntp to true"
-   if timedatectl set-ntp true
-   then 
-      echo "Done"
-   else 
-      echo "Oops, something went wrong"
-   fi
-   echo "Creating partitions"
-   if parted $blockDev mkpart primary ext4 $firstByte 100%
-   then
-      echo "Done"
-   else
-      echo "Oh No! Something whent wrong!"
-   fi
-   echo "Formating the partitions"
-  # mkfs.fat -F32 "$blockDev"1
-   mkfs.ext4 "$blockDev"$partNum   
-   mount "$blockDev"$partNum /mnt
-   mkdir /mnt/efi
-   mount "$blockDev"p2 /mnt/efi
+hostname=$(dialog --stdout --inputbox "Enter hostname" 0 0) || exit 1
+: ${hostname:?"hostname cannot be empty"}
+rootPass=$(dialog --stdout --passwordbox "Enter root password" 0 0) || exit 1
+: ${rootPass:?"password cannot be empty"}
+rootPass2=$(dialog --stdout --passwordbox "Re-enter root password" 0 0) || exit 1
+: ${rootPass:?"password cannot be empty"}
 
-   echo "Please enable multi-lib"
-   read response
-   vim /etc/pacman.conf
-   pacstrap /mnt base base-devel os-prober grub efibootmgr intel-ucode nvidia lib32-nvidia-utils xorg xorg-apps gnome gnome-extra
-   
-   echo "Generating /etc/fstab"
-   genfstab -U /mnt >> /mnt/etc/fstab
-   
-   echo "Attempting to export variables"
-   export blockDev
-   export rootPW
-   export userName
-   export userPwd
-   echo "Entering chroot"
-    
-   arch-chroot /mnt
-   ln -sf /usr/share/zoneinfo/America/Los_Angelos /etc/localtime
-   hwclock --systohc
-   echo "Please uncomment en_US.UTF-8 UTF-8 and the Japanese one"
-   read response
-   vim /etc/locale.gen
-   #touch /etc/locale.conf
-   echo "LANG=en_US.UTF-8" >> /etc/locale.conf
-   echo "dArch" >> /etc/hostname
-   echo "Please update /etc/hosts as needed"
-   read response
-   vim /etc/hosts
-   
-   passwd;$rootPW;$rootPW
-   grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-if=archLinux
-   grub-mkconfig -o /boot/grub/grub.cfg
-   useradd -m -g users -G wheel -s /bin/bash $userName
-   passwd $userName;$userPwd;$userPwd
-   
-   systemctl enable NetworkManager
-   systemctl enable gdm
-   
-   exit
-   umount -R /mnt
-   reboot
+[[ "$rootPass" == "$rootPass2" ]] || $(dialog --stdout --msgbox "Password did not match" 0 0)
+
+while   [[ "$rootPass" != "$rootPass2" ]]; do
+	rootPass=$(dialog --stdout --passwordbox "Enter root password" 0 0) || exit 1
+	: ${rootPass:?"password cannot be empty"}
+	rootPass2=$(dialog --stdout --passwordbox "Re-enter root password" 0 0) || exit 1
+	: ${rootPass:?"password cannot be empty"}
+
+	[[ "$rootPass" == "$rootPass2" ]] || $(dialog --stdout --msgbox "Password did not match" 0 0)
+done
+
+username=$(dialog --stdout --inputbox "Enter username" 0 0) || exit 1
+: ${username:?"username cannot be empty"}
+userPass=$(dialog --stdout --passwordbox "Enter user password" 0 0) || exit 1
+: ${userPass:?"password cannot be empty"}
+userPass2=$(dialog --stdout --passwordbox "Re-enter user password" 0 0) || exit 1
+: ${userPass:?"password cannot be empty"}
+
+[[ "$userPass" == "$userPass2" ]] || $(dialog --stdout --msgbox "Password did not match" 0 0)
+
+while   [[ "$userPass" != "$userPass2" ]]; do
+	userPass=$(dialog --stdout --passwordbox "Enter user password" 0 0) || exit 1
+	: ${userPass:?"password cannot be empty"}
+	userPass2=$(dialog --stdout --passwordbox "Re-enter user password" 0 0) || exit 1
+	: ${userPass:?"password cannot be empty"}
+
+	[[ "$userPass" == "$userPass2" ]] || $(dialog --stdout --msgbox "Password did not match" 0 0)
+done
+
+devicelist=$(lsblk -dplnx size -o name,size | grep -Ev "boot|rpmb|loop" | tac)
+device=$(dialog --stdout --menu "Select installation disk" 0 0 0 ${devicelist}) || exit 1
+
+parted "${device}"
+#parted ${device} print
+
+partlist=$(fdisk -l | grep -Ev Disk | grep -E "(/dev/[a-zA-Z0-9]*)" | gawk '{ print $1, "\t", $5, "\n" }')
+echo $partlist
+#exit
+part_boot=$(dialog --stdout --menu "Select boot partition" 0 0 0 ${partlist}) || exit 1
+part_root=$(dialog --stdout --menu "Select root partition" 0 0 0 ${partlist}) || exit 1
+
+dualBoot=$(dialog --stdout --yesno "Are you dual-booting on the same disk as Windows" 0 0)
+response=$?
+case $response in
+	0) echo "Nothing to do here then";;
+	1) mkfs.vfat -F32 "${part_boot}";;
+	255) echo "You decided you'd rather not say";;
+esac
+
+if mkfs.ext4 "${part_root}"; then
+	echo "Successfully formated root partition"
+else
+	echo "Formatting root partition failed"
+	exit
 fi
+
+if mount "${part_root}" /mnt; then
+	echo "Root partition mounted"
+else
+	echo "Oops, root partition failed to mount"
+	exit
+fi
+
+mkdir /mnt/boot
+if mount "${part_boot}" /mnt/boot; then
+	echo "Boot partition mounted successfully"
+else
+	echo "Failed while mounting boot partition"
+	exit
+fi
+
+if pacstrap /mnt base base-devel os-prober grub efibootmgr intel-ucode nvidia xorg gnome gnome-extra fcitx-mozc fcitx-im fcitx-ui-light fcitx-table-extra fcitx-table-other fcitx-configtool; then
+	echo "Finished install base OS"
+else
+	echo "Something fucked up"
+	exit
+fi
+
+arch-chroot /mnt grub-install --target=x86_64-efi --efi-direcotry=/boot --bootloader-id=archLinux
+arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+
+genfstab -t PARTUUID /mnt >> /mnt/etc/fstab
+echo "${hostname}" > /mnt/etc/hostname
+arch-chroot /mnt useradd -m -s /bin/bash -g users -G wheel,uucp,video,audio,storage,games,input "$username"
+arch-chroot /mnt chsh -s /usr/bin/zsh
+
+echo "$username:$userPass" | chpasswd --root /mnt
+echo "root:$rootPass" | chpasswd --root /mnt
+
+arch-chroot /mnt systemctl enable NetworkManager
+arch-chroot /mnt systemctl enable gdm
+
+arch-chroot /mnt timedatectl set-ntp true
+
+echo "GTK_IM_MODULE=fcitx" >> /mnt/home/${username}/.pam_environment
+echo "QT_IM_MODULE=fcitx" >> /mnt/home/${username}/.pam_environment
+echo "XMODIFIERS=@im=fcitx" >> /mnt/home/${username}/.pam_environment
