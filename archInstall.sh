@@ -85,7 +85,7 @@ else
 	exit
 fi
 
-arch-chroot /mnt grub-install --target=x86_64-efi --efi-direcotry=/boot --bootloader-id=archLinux
+arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=archLinux
 arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 
 genfstab -t PARTUUID /mnt >> /mnt/etc/fstab
