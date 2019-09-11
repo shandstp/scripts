@@ -58,6 +58,8 @@ esac
 
 if mkfs.ext4 "${part_root}"; then
 	echo "Successfully formated root partition"
+elif lsblk -f | grep ext4; then
+	echo "Already formated"
 else
 	echo "Formatting root partition failed"
 	exit
@@ -91,7 +93,7 @@ arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
 genfstab -t PARTUUID /mnt >> /mnt/etc/fstab
 echo "${hostname}" > /mnt/etc/hostname
 arch-chroot /mnt useradd -m -s /bin/bash -g users -G wheel,uucp,video,audio,storage,games,input "$username"
-arch-chroot /mnt chsh -s /usr/bin/zsh
+#arch-chroot /mnt chsh -s /usr/bin/zsh
 
 echo "$username:$userPass" | chpasswd --root /mnt
 echo "root:$rootPass" | chpasswd --root /mnt
@@ -100,6 +102,16 @@ arch-chroot /mnt systemctl enable NetworkManager
 arch-chroot /mnt systemctl enable gdm
 
 arch-chroot /mnt timedatectl set-ntp true
+arch-chroot /mnt ln -sf /usr/share/zoneinfo/America/Los_Angelos /etc/localtime
+arch-chroot /mnt sed -i s/"#en_US.UTF-8 UTF-8"/"en_US.UTF-8 UTF-8"/ /etc/locale.gen
+arch-chroot /mnt sed -i s/"ja_JP.UTF-8 UTF-8"/"ja_JP.UTF-8 UTF-8"/ /etc/locale.gen
+arch-chroot /mnt locale-gen
+
+echo "LANG=en_US.UTF-8" >> /mnt/etc/locale.conf
+echo "127.0.0.1	localhost" >> /mnt/etc/hosts
+echo "::1	localhost" >> /mnt/etc/hosts
+echo "127.0.1.1	${hostname}.localdomain	${hostname}" >> /mnt/etc/hosts
+
 
 echo "GTK_IM_MODULE=fcitx" >> /mnt/home/${username}/.pam_environment
 echo "QT_IM_MODULE=fcitx" >> /mnt/home/${username}/.pam_environment
