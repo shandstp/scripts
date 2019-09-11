@@ -118,3 +118,11 @@ echo "GTK_IM_MODULE=fcitx" >> /mnt/home/${username}/.pam_environment
 echo "QT_IM_MODULE=fcitx" >> /mnt/home/${username}/.pam_environment
 echo "XMODIFIERS=@im=fcitx" >> /mnt/home/${username}/.pam_environment
 chown ${username} /mnt/home/${username}/.pam_environment
+
+arch-chroot /mnt sed -i s/"#[multilib]"/"[multilib]"/ /etc/pacman.conf
+arch-chroot /mnt sed -i s/"#Include = /etc/pacman.d/mirrorlist"/"[Include = /etc/pacman.d/mirrorlist"/ /etc/pacman.conf
+
+arch-chroot /mnt pacman -Syu steam steam-native-runtime firefox lib32-nvidia-utils nvidia-settings
+
+echo "That should about do it. Rebooting..."
+reboot
