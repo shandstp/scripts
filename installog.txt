@@ -1,6 +1,22 @@
 GNU Parted 3.2
 Using /dev/sda
 Welcome to GNU Parted! Type 'help' to view a list of commands.
+                                                                          (parted) mklabel p[Kgpt
+Warning: The existing disk label on /dev/sda will be destroyed and all data on
+this disk will be lost. Do you want to continue?
+                                                                                                                                                    Yes/No? Yes
+                                                                          (parted) print
+Model: ATA VBOX HARDDISK (scsi)
+Disk /dev/sda: 34.4GB
+Sector size (logical/physical): 512B/512B
+Partition Table: gpt
+Disk Flags: 
+
+Number  Start  End  Size  File system  Name  Flags
+
+                                                                          (parted) mklab[K[K[Kpart primary fat32 1MiB 512MiB
+                                                                          (parted) set 1 esp on
+                                                                          (parted) mkpart primary ext4 512MiB 100%
                                                                           (parted) print
 Model: ATA VBOX HARDDISK (scsi)
 Disk /dev/sda: 34.4GB
@@ -13,11 +29,13 @@ Number  Start   End     Size    File system  Name     Flags
  2      537MB   34.4GB  33.8GB  ext4         primary
 
                                                                           (parted) quit
-/dev/sda1 511M /dev/sda2 31.5G
+Information: You may need to update /etc/fstab.
+
+                                                                          /dev/sda1 511M /dev/sda2 31.5G
 mkfs.fat 4.1 (2017-01-24)
 mke2fs 1.45.3 (14-Jul-2019)
 Creating filesystem with 8257280 4k blocks and 2064384 inodes
-Filesystem UUID: d4c36395-8704-4fd2-a26f-34b1f53d3139
+Filesystem UUID: de2dc90c-352c-4ef6-9247-79b8e958eaf2
 Superblock backups stored on blocks: 
 	32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 2654208, 
 	4096000, 7962624
@@ -2685,9 +2703,8 @@ Generating locales...
 Generation complete.
 sed: -e expression #1, char 20: unknown option to `s'
 :: Synchronizing package databases...
-error: target not found: steam
-error: target not found: steam-native-runtime
-error: target not found: lib32-nvidia-utils
+error: failed to update multilib (no servers configured for repository)
+error: failed to synchronize all databases
  core is up to date
  extra is up to date
  community is up to date

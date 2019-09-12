@@ -120,10 +120,9 @@ echo "XMODIFIERS=@im=fcitx" >> /mnt/home/${username}/.pam_environment
 arch-chroot /mnt chown ${username} /home/${username}/.pam_environment
 
 arch-chroot /mnt sed -i s/"#\[multilib\]"/"\[multilib\]"/ /etc/pacman.conf
-arch-chroot /mnt sed -i s/"#Include = /etc/pacman.d/mirrorlist"/"Include = /etc/pacman.d/mirrorlist"/ /etc/pacman.conf
+arch-chroot /mnt sed -i 94s/"#Include/Include"/ /etc/pacman.conf
 
 arch-chroot /mnt pacman -Syu steam steam-native-runtime firefox lib32-nvidia-utils nvidia-settings
 
 echo "That should about do it. Rebooting..."
-#reboot
-echo "Or not... Standing by"
+reboot
