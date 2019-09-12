@@ -122,7 +122,7 @@ arch-chroot /mnt chown ${username} /home/${username}/.pam_environment
 arch-chroot /mnt sed -i s/"#\[multilib\]"/"\[multilib\]"/ /etc/pacman.conf
 arch-chroot /mnt sed -i 94s/"#Include/Include"/ /etc/pacman.conf
 
-arch-chroot /mnt pacman -Syu steam steam-native-runtime firefox lib32-nvidia-utils nvidia-settings
+arch-chroot /mnt pacman --noconfirm -Syu steam steam-native-runtime firefox lib32-nvidia-utils nvidia-settings
 
 echo "That should about do it. Rebooting..."
 reboot
